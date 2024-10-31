@@ -1,0 +1,89 @@
+from PyQt5.QtWidgets import QApplication, QListWidget,QPushButton,QLabel,QVBoxLayout, QHBoxLayout, QWidget, QFileDialog
+from PyQt5.QtCore import Qt 
+from PyQt5.QtGui import QPixmap
+import os
+from PIL import Image
+app = QApplication([])
+main_win = QWidget()
+main_win.setWindowTitle('фотошоп')
+main_win.resize(800,800)
+
+btn1 = QPushButton('право')
+btn2 = QPushButton('лево')
+btn3 = QPushButton('зеркало')
+btn4 = QPushButton('резкость')
+btn5 = QPushButton('черно-белый')
+btndir = QPushButton('папка')
+
+picture = QLabel('picture')
+lw_lines = QListWidget()
+mainlay = QHBoxLayout()
+col1 = QVBoxLayout()
+col2 = QVBoxLayout()
+tools = QHBoxLayout()
+
+col1.addWidget(btndir)
+col1.addWidget(lw_lines)
+tools.addWidget(btn1)
+tools.addWidget(btn2)
+tools.addWidget(btn3)
+tools.addWidget(btn4)
+tools.addWidget(btn5)
+col2.addWidget(picture)
+col2.addLayout(tools)
+
+mainlay.addLayout(col1, 20)
+mainlay.addLayout(col2, 70)
+main_win.setLayout(mainlay)
+main_win.show()
+
+workdir = ''
+def chooseWorkdir():
+    global workdir
+    workdir = QFileDialog.getExistingDirectory()
+
+def filter (files, extensions):
+    result=[]
+    for filename in files:
+        for ext in extensions:
+            if filename.endswith(ext):
+                result.append(filename)
+    return result
+
+def showFilenamesList():
+    extensions = ['.png','.jpg', 'jpeg','gif']
+    chooseWorkdir()
+    filenames = filter(os.listdir(workdir), extensions)
+    lw_lines.clear()
+    for filename in filenames:
+        lw_lines.addItem(filename)
+
+class ImageEditor():
+    def __init__(self):
+        self.filename = None
+        self.dir = None
+        self.image = None
+        self.save_dir = 'modified/'
+    def loadImage(self, filename):
+        self.filename = filename
+        image_path = os.path.join(workdir, filename)
+        self.image = Image.open(image_path)
+    def ShowImage(self, path):
+        picture.hide()
+        pixmapimage = QPixmap(path)
+        w, h = picture.width(), picture.height()
+        pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
+        picture.setPixmap(pixmapimage)
+        picture.show()
+def showChosenImage():
+    if lw_lines.currentRow() >= 0:
+        filename = lw_lines.currentItem().text()
+        workimage.loadImage(filename)
+        image_path = os.path.join(workdir, workimage.filename)
+        workimage.ShowImage(image_path)
+
+workimage = ImageEditor()
+lw_lines.currentRowChanged.connect(showChosenImage)
+
+btndir.clicked.connect(showFilenamesList)
+app.exec_()
